@@ -1,10 +1,13 @@
 import unittest
 
-from config_factory import create_config, destroy_config, CONFIG_FILE
+from config_factory import ConfigFactory
 from lib.config import ConfigNotFound, ConfigMissingDomain, ConfigMissingParameter, read_config
 
 
 class TestNamecheapConfig(unittest.TestCase):
+
+    def setUp(self):
+        self.factory = ConfigFactory()
 
     def test_not_found(self):
         self.assertRaisesRegexp(
@@ -15,16 +18,16 @@ class TestNamecheapConfig(unittest.TestCase):
         )
 
     def test_no_sections(self):
-        create_config()
+        config_path = self.factory.create_config()
         self.assertRaisesRegexp(
                 ConfigMissingDomain,
                 'no domains configured',
                 read_config,
-                CONFIG_FILE
+                config_path
         )
 
     def test_no_hosts(self):
-        create_config({
+        config_path = self.factory.create_config({
             'domain': 'example.com',
             'password': 'test',
             'ip': '127.0.0.1'
@@ -33,11 +36,11 @@ class TestNamecheapConfig(unittest.TestCase):
                 ConfigMissingParameter,
                 'no hosts parameter',
                 read_config,
-                CONFIG_FILE
+                config_path
         )
 
     def test_no_password(self):
-        create_config({
+        config_path = self.factory.create_config({
             'domain': 'example.com',
             'hosts': '@',
             'ip': '127.0.0.1'
@@ -46,11 +49,11 @@ class TestNamecheapConfig(unittest.TestCase):
                 ConfigMissingParameter,
                 'no password parameter',
                 read_config,
-                CONFIG_FILE
+                config_path
         )
 
     def test_no_ip(self):
-        create_config({
+        config_path = self.factory.create_config({
             'domain': 'example.com',
             'hosts': '@',
             'password': 'test'
@@ -59,17 +62,17 @@ class TestNamecheapConfig(unittest.TestCase):
                 ConfigMissingParameter,
                 'no ip parameter',
                 read_config,
-                CONFIG_FILE
+                config_path
         )
 
     def test_config_ok(self):
-        create_config({
+        config_path = self.factory.create_config({
             'domain': 'example.com',
             'hosts': '@, www',
             'password': 'test',
             'ip': '127.0.0.1'
         })
-        domains = read_config(CONFIG_FILE)
+        domains = read_config(config_path)
         for domain in domains:
             assert domain.name == 'example.com'
             assert domain.hosts == ['@', 'www']
@@ -77,4 +80,4 @@ class TestNamecheapConfig(unittest.TestCase):
             assert domain.ip == '127.0.0.1'
 
     def tearDown(self):
-        destroy_config()
+        self.factory.destroy_configs()
