@@ -3,15 +3,23 @@ import os.path
 from lib.domain import Domain
 
 
-class ConfigNotFound(Exception):
+class ConfigException(RuntimeError):
     pass
 
 
-class ConfigMissingDomain(Exception):
+class ConfigNotFound(ConfigException):
     pass
 
 
-class ConfigMissingParameter(Exception):
+class ConfigMissingDomain(ConfigException):
+    pass
+
+
+class ConfigMissingParameter(ConfigException):
+    pass
+
+
+class ConfigEmptyParameter(ConfigException):
     pass
 
 
@@ -37,11 +45,21 @@ def read_config(file_name, search_path=['./'], kill=False):
             if config.sections():
                 for domain in config.sections():
                     for parameter in required_parameters:
+                        # parameter missing
                         if not config.has_option(domain, parameter):
                             config_error(
                                     kill,
                                     ConfigMissingParameter,
                                     'no {} parameter configured for {}',
+                                    parameter,
+                                    domain
+                            )
+                        # parameter empty
+                        elif not config.get(domain, parameter):
+                            config_error(
+                                    kill,
+                                    ConfigEmptyParameter,
+                                    'parameter {} is empty for domain {}',
                                     parameter,
                                     domain
                             )

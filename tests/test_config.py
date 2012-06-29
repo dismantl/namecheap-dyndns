@@ -1,7 +1,7 @@
 import unittest
+import lib.config
 
 from config_factory import ConfigFactory
-from lib.config import ConfigNotFound, ConfigMissingDomain, ConfigMissingParameter, read_config
 
 
 class TestNamecheapConfig(unittest.TestCase):
@@ -15,21 +15,13 @@ class TestNamecheapConfig(unittest.TestCase):
         self.factory = ConfigFactory()
 
     def test_not_found(self):
-        self.assertRaisesRegexp(
-                ConfigNotFound,
-                'no config found',
-                read_config,
-                'not_exists.cfg'
-        )
+        with self.assertRaises(lib.config.ConfigNotFound):
+            lib.config.read_config('does_not_exist.cfg')
 
     def test_no_sections(self):
         config_path = self.factory.create_config()
-        self.assertRaisesRegexp(
-                ConfigMissingDomain,
-                'no domains configured',
-                read_config,
-                config_path
-        )
+        with self.assertRaises(lib.config.ConfigMissingDomain):
+            lib.config.read_config(config_path)
 
     def test_no_hosts(self):
         config_path = self.factory.create_config({
@@ -37,12 +29,18 @@ class TestNamecheapConfig(unittest.TestCase):
             'password': self.password,
             'ip': self.ip
         })
-        self.assertRaisesRegexp(
-                ConfigMissingParameter,
-                'no hosts parameter',
-                read_config,
-                config_path
-        )
+        with self.assertRaises(lib.config.ConfigMissingParameter):
+            lib.config.read_config(config_path)
+
+    def test_empty_hosts(self):
+        config_path = self.factory.create_config({
+            'domain': self.domain,
+            'hosts': '',
+            'password': self.password,
+            'ip': self.ip
+        })
+        with self.assertRaises(lib.config.ConfigEmptyParameter):
+            lib.config.read_config(config_path)
 
     def test_no_password(self):
         config_path = self.factory.create_config({
@@ -50,12 +48,18 @@ class TestNamecheapConfig(unittest.TestCase):
             'hosts': '@',
             'ip': self.ip
         })
-        self.assertRaisesRegexp(
-                ConfigMissingParameter,
-                'no password parameter',
-                read_config,
-                config_path
-        )
+        with self.assertRaises(lib.config.ConfigMissingParameter):
+            lib.config.read_config(config_path)
+
+    def test_empty_password(self):
+        config_path = self.factory.create_config({
+            'domain': self.domain,
+            'hosts': self.hosts,
+            'password': '',
+            'ip': self.ip
+        })
+        with self.assertRaises(lib.config.ConfigEmptyParameter):
+            lib.config.read_config(config_path)
 
     def test_no_ip(self):
         config_path = self.factory.create_config({
@@ -63,12 +67,18 @@ class TestNamecheapConfig(unittest.TestCase):
             'hosts': '@',
             'password': self.password
         })
-        self.assertRaisesRegexp(
-                ConfigMissingParameter,
-                'no ip parameter',
-                read_config,
-                config_path
-        )
+        with self.assertRaises(lib.config.ConfigMissingParameter):
+            lib.config.read_config(config_path)
+
+    def test_empty_ip(self):
+        config_path = self.factory.create_config({
+            'domain': self.domain,
+            'hosts': self.hosts,
+            'password': self.password,
+            'ip': ''
+        })
+        with self.assertRaises(lib.config.ConfigEmptyParameter):
+            lib.config.read_config(config_path)
 
     def test_config_ok(self):
         config_path = self.factory.create_config({
@@ -77,7 +87,7 @@ class TestNamecheapConfig(unittest.TestCase):
             'password': self.password,
             'ip': self.ip
         })
-        domains = read_config(config_path)
+        domains = lib.config.read_config(config_path)
         for domain in domains:
             self.assertEqual(domain.name, self.domain)
             self.assertListEqual(domain.hosts, self.striped_hosts)
