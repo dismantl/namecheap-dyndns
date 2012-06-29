@@ -7,6 +7,11 @@ from lib.config import ConfigNotFound, ConfigMissingDomain, ConfigMissingParamet
 class TestNamecheapConfig(unittest.TestCase):
 
     def setUp(self):
+        self.domain = 'example.com'
+        self.password = 'test'
+        self.hosts = '@, www'
+        self.striped_hosts = map(lambda s: s.strip(), self.hosts.split(','))
+        self.ip = '127.0.0.1'
         self.factory = ConfigFactory()
 
     def test_not_found(self):
@@ -28,9 +33,9 @@ class TestNamecheapConfig(unittest.TestCase):
 
     def test_no_hosts(self):
         config_path = self.factory.create_config({
-            'domain': 'example.com',
-            'password': 'test',
-            'ip': '127.0.0.1'
+            'domain': self.domain,
+            'password': self.password,
+            'ip': self.ip
         })
         self.assertRaisesRegexp(
                 ConfigMissingParameter,
@@ -41,9 +46,9 @@ class TestNamecheapConfig(unittest.TestCase):
 
     def test_no_password(self):
         config_path = self.factory.create_config({
-            'domain': 'example.com',
+            'domain': self.domain,
             'hosts': '@',
-            'ip': '127.0.0.1'
+            'ip': self.ip
         })
         self.assertRaisesRegexp(
                 ConfigMissingParameter,
@@ -54,9 +59,9 @@ class TestNamecheapConfig(unittest.TestCase):
 
     def test_no_ip(self):
         config_path = self.factory.create_config({
-            'domain': 'example.com',
+            'domain': self.domain,
             'hosts': '@',
-            'password': 'test'
+            'password': self.password
         })
         self.assertRaisesRegexp(
                 ConfigMissingParameter,
@@ -67,17 +72,17 @@ class TestNamecheapConfig(unittest.TestCase):
 
     def test_config_ok(self):
         config_path = self.factory.create_config({
-            'domain': 'example.com',
-            'hosts': '@, www',
-            'password': 'test',
-            'ip': '127.0.0.1'
+            'domain': self.domain,
+            'hosts': self.hosts,
+            'password': self.password,
+            'ip': self.ip
         })
         domains = read_config(config_path)
         for domain in domains:
-            assert domain.name == 'example.com'
-            assert domain.hosts == ['@', 'www']
-            assert domain.password == 'test'
-            assert domain.ip == '127.0.0.1'
+            self.assertEqual(domain.name, self.domain)
+            self.assertListEqual(domain.hosts, self.striped_hosts)
+            self.assertEqual(domain.password, self.password)
+            self.assertEqual(domain.ip, self.ip)
 
     def tearDown(self):
         self.factory.destroy_configs()
