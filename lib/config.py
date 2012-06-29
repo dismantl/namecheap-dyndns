@@ -3,7 +3,7 @@ import os.path
 from lib.domain import Domain
 
 
-class ConfigException(RuntimeError):
+class ConfigException(Exception):
     pass
 
 

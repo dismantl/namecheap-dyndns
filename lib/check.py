@@ -7,11 +7,15 @@ cached = None
 CHECK_IP_URL = 'http://checkip.dyndns.com'
 
 
-class CheckIpRequestException(requests.RequestException):
+class CheckIpException(Exception):
     pass
 
 
-class CheckIpParseException(Exception):
+class CheckIpRequestException(CheckIpException):
+    pass
+
+
+class CheckIpParseException(CheckIpException):
     pass
 
 
